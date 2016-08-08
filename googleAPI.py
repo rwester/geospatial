@@ -3,6 +3,9 @@
 Created on Fri Oct 16 13:30:46 2015
 
 @author: westerr
+
+Class for interfacing with google geocoding api and distance matrix api
+
 """
 import urllib, json, urllib2, time
 
@@ -10,8 +13,6 @@ class GoogleMapsAPI(object):
     def __init__(self, key):
         # Initializing class object
         self.key = key # google maps api key
-        self.dailylimit = 2500
-        self.limitpersecond = 50
         
     def get_geocode(self, address, optional_args=None, time_delay=0.5, error='Error'):
         """
@@ -91,9 +92,9 @@ class GoogleMapsAPI(object):
         DIST_MATRIX_URL = "https://maps.googleapis.com/maps/api/distancematrix/json?"
         
         # Define query params
-        encode_params = {'key': self.key, 'origins': orign, 'destinations': dest}
+        encode_params = {'key': self.key, 'origins': orign, 'destinations': dest} # required
         if optional_args:
-            encode_params.update(optional_args)
+            encode_params.update(optional_args) # add optional args
         
         # Request and read results
         encodedParams = urllib.urlencode(encode_params)
@@ -124,6 +125,5 @@ if __name__ == '__main__':
     print boston_geocode
     
     dist_matrx = maps.get_distance(['Boston, MA', 'Burlington, VT'], ['New York, NY'])
-    #waltham_to_boston = maps.get_distance('Boston, MA', 'New York, NY')
     print dist_matrx
 
