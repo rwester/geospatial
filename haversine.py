@@ -2,14 +2,10 @@
 """
 Created on Thu Jul 21 15:29:17 2016
 
+@author: westerr
 
-@author: Rick Wester 
-@contact: Richard.Wester@nationalgrid.com
-@copyright: Advanced Data and Analytics, Core Process Advanced Analytics 
-@date: 07/21/2016
+Haversine formula to find closest geocode in a dataframe/matrix of other geocodes
 
-Haversine formula to find closest weather station given lat/long and dataframe of available
-weather stations
 """
 import numpy as np
 import pandas as pd
@@ -24,9 +20,7 @@ def haversine(lat1, lon1, lat2, lon2, units='miles'):
     """
     earth_radius = {'miles': 3959., 'km': 6371.}
     a = np.square(np.sin((lat2 - lat1)/2.)) + np.cos(lat1) * np.cos(lat2) * np.square(np.sin((lon2 - lon1)/2.))        
-    # dist = 2 * earth_radius[units] * np.arcsin(np.minimum(np.sqrt(a), np.repeat(1, len(a))))    CHANGED TO BELOW LINE ON 07/28/2016  
-    dist = 2 * earth_radius[units] * np.arcsin(np.sqrt(a))                 
-    return dist
+    return 2 * earth_radius[units] * np.arcsin(np.sqrt(a))   
 
 def closest_geocode(lat_lon_tuple, lat_lon_matrix, n_closest=1, return_dist=False, units='miles'):
     """
@@ -46,8 +40,12 @@ def closest_geocode(lat_lon_tuple, lat_lon_matrix, n_closest=1, return_dist=Fals
     """    
     # Setup lat lon pairs and convert to radians
     lat, lon = np.radians(lat_lon_tuple)
-    lats = np.radians(lat_lon_matrix[:,0])
-    lons =  np.radians(lat_lon_matrix[:,1])
+    shape = lat_lon_matrix.shape
+    if shape[1] <= 2:
+        lats = np.radians(lat_lon_matrix[:,0])
+        lons =  np.radians(lat_lon_matrix[:,1])
+    else:
+        raise ValueError("lat_lon_matrix should only be two columns of format [lat, lon]")
 
     # Call haversine formula and return distance
     dist = haversine(lat, lon, lats, lons, units=units)
