@@ -10,18 +10,20 @@ Class for interfacing with google geocoding api and distance matrix api
 import urllib, json, urllib2, time
 
 class GoogleMapsAPI(object):
-    def __init__(self, key):
+    def __init__(self, key, time_delay=0.5):
         # Initializing class object
         self.key = key # google maps api key
+        self.time_delay = time_delay # delay due to request frequency limits 
         
-    def get_geocode(self, address, optional_args=None, time_delay=0.5, error='Error'):
+    def __response_error(self, error_text):
+        raise ValueError("Error in JSON response: %s" % error_text)
+
+    def get_geocode(self, address, optional_args=None, error=None):
         """
         Takes an address as a string and returns the lat/long in a dictionary
         
         optional_args is a dictionary of key value pairs where the key is the optional
         param and the value is the query value 
-        
-        time_delay specifies a delay do to call limits
         
         if error in response will fill results with value specified by error
         
@@ -40,23 +42,26 @@ class GoogleMapsAPI(object):
             encodedParams = urllib.urlencode(encode_params)
             request = urllib2.Request(GEOCODE_URL+encodedParams)
             response = urllib2.urlopen(request)
-            json_result = json.loads(response.read())
-            self.geocode_result = json_result # make accessible from main
+            self.geocode_result = json.loads(response.read()) # make accessible from main
             
             # Process api results
-            if json_result['status'] == 'OK':
-                lon = json_result['results'][0]['geometry']['location']['lng']
-                lat = json_result['results'][0]['geometry']['location']['lat']
+            if self.geocode_result['status'] == 'OK':
+                lon = self.geocode_result['results'][0]['geometry']['location']['lng']
+                lat = self.geocode_result['results'][0]['geometry']['location']['lat']
             else:
-                print 'Requested failed with error code: ' + json_result['status']
-                lon = error
-                lat = error    
-            time.sleep(time_delay) # delay for request limits 
+                error_str = self.geocode_result['status']
+                if error:
+                    print 'Requested failed with error code: ' + error_str
+                    lon = error
+                    lat = error    
+                else:
+                    self.__response_error(error_str)
+            time.sleep(self.time_delay) # delay for request limits 
             return {'longitude': lon, 'latitude': lat}
         else:
             raise TypeError("address must be a string , got %s" % type(address))
         
-    def get_distance(self, origin, destination, optional_args=None, time_delay=0.5, error='Error'):
+    def get_distance(self, origin, destination, optional_args=None, handle_error=False):
         """
         Providing the origin and a destination address as strings will 
         return the travel time in minutes and travel distance in miles
@@ -65,9 +70,7 @@ class GoogleMapsAPI(object):
         optional_args is a dictionary of key value pairs where the key is the optional
         param and the value is the query value 
         
-        time_delay specifies a delay do to call limits
-        
-        if error in response will fill results with value specified by error
+        If handle_error is True will return an empty dictionary, if False will raise an exception
         
         """        
         
@@ -100,21 +103,24 @@ class GoogleMapsAPI(object):
         encodedParams = urllib.urlencode(encode_params)
         request = urllib2.Request(DIST_MATRIX_URL+encodedParams)
         response = urllib2.urlopen(request)
-        json_result = json.loads(response.read())
-        self.dist_result = json_result # make accessible from main
+        self.dist_result = json.loads(response.read()) # make accessible from main
         
         # Process api results
         results = {}
-        if json_result['status'] == 'OK':
+        if self.dist_result['status'] == 'OK':
             for i in xrange(shape[0]):
                 for j in xrange(shape[1]):
-                    results['origin-'+str(i)+'_destination-'+str(j)] = {'duration': json_result['rows'][i]['elements'][j]['duration']['value'] / 60., # time in minuts
-                                                            'distance': json_result['rows'][i]['elements'][j]['distance']['value'] * 0.000621371, # distance in miles
-                                                            'origin': json_result['origin_addresses'][i],
-                                                            'destination': json_result['destination_addresses'][j]}
+                    results['origin-'+str(i)+'_destination-'+str(j)] = {'duration': self.dist_result['rows'][i]['elements'][j]['duration']['value'] / 60., # time in minuts
+                                                            'distance': self.dist_result['rows'][i]['elements'][j]['distance']['value'] * 0.000621371, # distance in miles
+                                                            'origin': self.dist_result['origin_addresses'][i],
+                                                            'destination': self.dist_result['destination_addresses'][j]}
         else:
-            print 'Requested failed with error code: ' + json_result['status']
-        time.sleep(time_delay) # delay to not get locked out of api
+            error_str = self.dist_result['status']
+            if handle_error == True:
+                print 'Requested failed with error code: ' + error_str
+            else:
+                self.__response_error(error_str)
+        time.sleep(self.time_delay) # delay to not get locked out of api
         return results
 
 if __name__ == '__main__':
