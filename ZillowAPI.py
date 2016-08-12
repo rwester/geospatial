@@ -67,12 +67,12 @@ class ZillowAPI(object):
             for n, element in enumerate(elements): # response can have multiple results, for example a condo complex with many units
                 results[element.tag+'_'+str(n)] = self.parse_xml(element)['result']
         else:
-            error = self.dsr_xml_et.find('./message/text').text
+            error_str = self.dsr_xml_et.find('./message/text').text
             if handle_error == True:
-                print "ERROR: " + error
+                print "ERROR: " + error_str
                 results = {}
             else:
-                self.__response_error(error)
+                self.__response_error(error_str)
         return results
         
     def getUpdatedPropertyDetails(self, zpid, handle_error=False):
@@ -93,12 +93,12 @@ class ZillowAPI(object):
             elements = self.upd_xml_et.find('./response') # starting point
             results = self.parse_xml(elements)['response']
         else:
-            error = self.upd_xml_et.find('./message/text').text
+            error_str = self.upd_xml_et.find('./message/text').text
             if handle_error == True:
-                print "ERROR: " + error
+                print "ERROR: " + error_str
                 results = {}
             else:
-                self.__response_error(error)
+                self.__response_error(error_str)
         return results
         
 if __name__=='__main__':
