@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed May 18 16:54:53 2016
 @author: rwester
 @date: 05/13/2016
 
@@ -103,7 +102,7 @@ class ZillowAPI(object):
         return results
         
 if __name__=='__main__':
-    # Example of how to use script
+    # Example use
     zillow = ZillowAPI('some zillow key')
     results = zillow.getDeepSearchResults(("2114 Bigelow Ave", "Seattle, WA"), optional_args={'rentzestimate': 'True'})  
     print results
